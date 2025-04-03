@@ -4,7 +4,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "prestart": "npm install",
+    "prestart": "npm ci",
     "build": "echo 'Nothing to build'",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon server.js"
