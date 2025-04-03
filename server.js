@@ -46,8 +46,12 @@ app.post("/products", upload.array("images", 10), async (req, res) => {
     const { name, description, link, price, available } = req.body;
 
     const newProduct = new Product({
-      images, name, description, link, price,
-      available: available === "true"
+      images,
+      name,
+      description,
+      link,
+      price,
+      available: available === "true",
     });
 
     await newProduct.save();
@@ -57,13 +61,14 @@ app.post("/products", upload.array("images", 10), async (req, res) => {
   }
 });
 
-// API: Получить товары (только те, что в наличии)
+// API: Получить товары (если передан ?all=true, то вернёт все)
 app.get("/products", async (req, res) => {
-  const products = await Product.find({ available: true });
+  const filter = req.query.all === "true" ? {} : { available: true };
+  const products = await Product.find(filter);
   res.json(products);
 });
 
-// API: Редактировать товар
+// API: Редактировать товар (но не изображения)
 app.put("/products/:id", async (req, res) => {
   const { name, description, price } = req.body;
   const updatedProduct = await Product.findByIdAndUpdate(
@@ -77,6 +82,9 @@ app.put("/products/:id", async (req, res) => {
 // API: Скрыть/Показать товар
 app.patch("/products/:id/toggle", async (req, res) => {
   const product = await Product.findById(req.params.id);
+  if (!product) {
+    return res.status(404).json({ error: "Товар не найден" });
+  }
   product.available = !product.available;
   await product.save();
   res.json(product);
@@ -84,9 +92,13 @@ app.patch("/products/:id/toggle", async (req, res) => {
 
 // API: Удалить товар
 app.delete("/products/:id", async (req, res) => {
-  await Product.findByIdAndDelete(req.params.id);
-  res.json({ message: "Товар удален" });
+  const deletedProduct = await Product.findByIdAndDelete(req.params.id);
+  if (!deletedProduct) {
+    return res.status(404).json({ error: "Товар не найден" });
+  }
+  res.json({ message: "Товар удален", id: req.params.id });
 });
 
 // Запуск сервера
-app.listen(5000, () => console.log("Server running on port 5000"));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
