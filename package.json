@@ -1,14 +1,17 @@
 {
   "name": "creatium-shop",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node server.js",
+    "prestart": "npm install",
     "build": "echo 'Nothing to build'",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon server.js"
   },
   "engines": {
-    "node": "18.x"
+    "node": "18.x",
+    "npm": ">=9"
   },
   "keywords": [],
   "author": "",
@@ -22,5 +25,8 @@
     "mongoose": "^8.13.1",
     "multer": "^1.4.5-lts.2",
     "multer-storage-cloudinary": "^4.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
   }
 }
