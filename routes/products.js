@@ -23,10 +23,12 @@ const storage = new CloudinaryStorage({
 });
 const upload = multer({ storage });
 
-// ✅ Фильтрация товаров по названию
+// ✅ Получение всех товаров (поиск по названию, если указан)
 router.get("/", async (req, res) => {
   try {
-    const searchQuery = req.query.search ? { name: { $regex: req.query.search, $options: "i" } } : {};
+    const searchQuery = req.query.search
+      ? { name: { $regex: req.query.search, $options: "i" } }
+      : {};
     const products = await Product.find(searchQuery);
     res.json(products);
   } catch (error) {
@@ -34,28 +36,37 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ Добавление товара (с фото)
+// ✅ Добавление нового товара с фото
 router.post("/", upload.array("images", 10), async (req, res) => {
   try {
     const { name, description, link, price } = req.body;
-    const images = req.files && req.files.length > 0 ? req.files.map(file => file.path) : [];
+    const images = req.files && req.files.length > 0
+      ? req.files.map(file => file.path)
+      : [];
 
-    const newProduct = new Product({ images, name, description, link, price, hidden: false });
+    const newProduct = new Product({
+      images,
+      name,
+      description,
+      link,
+      price,
+      hidden: false
+    });
+
     await newProduct.save();
-
     res.status(201).json(newProduct);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// ✅ Обновление товара (название, описание, цена)
+// ✅ Обновление товара (добавлен link!)
 router.put("/:id", async (req, res) => {
   try {
-    const { name, description, price } = req.body;
+    const { name, description, price, link } = req.body;
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      { name, description, price },
+      { name, description, price, link },
       { new: true }
     );
     res.json(updatedProduct);
@@ -77,7 +88,11 @@ router.delete("/:id", async (req, res) => {
 // ✅ Скрытие товара
 router.put("/:id/hide", async (req, res) => {
   try {
-    const updatedProduct = await Product.findByIdAndUpdate(req.params.id, { hidden: true }, { new: true });
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      { hidden: true },
+      { new: true }
+    );
     res.json(updatedProduct);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -87,7 +102,11 @@ router.put("/:id/hide", async (req, res) => {
 // ✅ Отображение скрытого товара
 router.put("/:id/show", async (req, res) => {
   try {
-    const updatedProduct = await Product.findByIdAndUpdate(req.params.id, { hidden: false }, { new: true });
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      { hidden: false },
+      { new: true }
+    );
     res.json(updatedProduct);
   } catch (error) {
     res.status(500).json({ error: error.message });
