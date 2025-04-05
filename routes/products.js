@@ -23,7 +23,7 @@ const storage = new CloudinaryStorage({
 });
 const upload = multer({ storage });
 
-// ✅ Получение всех товаров (поиск по названию, если указан)
+// ✅ Получение всех товаров
 router.get("/", async (req, res) => {
   try {
     const searchQuery = req.query.search
@@ -36,13 +36,11 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ Добавление нового товара с фото
+// ✅ Добавление нового товара
 router.post("/", upload.array("images", 10), async (req, res) => {
   try {
     const { name, description, link, price } = req.body;
-    const images = req.files && req.files.length > 0
-      ? req.files.map(file => file.path)
-      : [];
+    const images = req.files?.map(file => file.path) || [];
 
     const newProduct = new Product({
       images,
@@ -50,7 +48,7 @@ router.post("/", upload.array("images", 10), async (req, res) => {
       description,
       link,
       price,
-      hidden: false
+      visible: true // 👈 используем visible вместо hidden
     });
 
     await newProduct.save();
@@ -60,7 +58,7 @@ router.post("/", upload.array("images", 10), async (req, res) => {
   }
 });
 
-// ✅ Обновление товара (добавлен link!)
+// ✅ Обновление товара
 router.put("/:id", async (req, res) => {
   try {
     const { name, description, price, link } = req.body;
@@ -85,26 +83,13 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// ✅ Скрытие товара
-router.put("/:id/hide", async (req, res) => {
+// ✅ Обновление видимости (универсально)
+router.patch("/:id", async (req, res) => {
   try {
+    const { visible } = req.body;
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      { hidden: true },
-      { new: true }
-    );
-    res.json(updatedProduct);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ✅ Отображение скрытого товара
-router.put("/:id/show", async (req, res) => {
-  try {
-    const updatedProduct = await Product.findByIdAndUpdate(
-      req.params.id,
-      { hidden: false },
+      { visible },
       { new: true }
     );
     res.json(updatedProduct);
