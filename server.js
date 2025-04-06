@@ -32,24 +32,33 @@ const upload = multer({ storage });
 
 // Модель товара
 const Product = mongoose.model("Product", {
-  images: [String], // массив строк для URL изображений
+  images: [String],
   name: { type: String, required: true },
   description: String,
   link: String,
   price: { type: Number, required: true },
+  visible: { type: Boolean, default: true },
 });
 
-// API: Добавить товар
+// ✅ Добавить товар
 app.post("/products", upload.array("images", 10), async (req, res) => {
   try {
-    if (!req.body.name || !req.body.price) {
+    const { name, description, link, price } = req.body;
+    if (!name || !price) {
       return res.status(400).json({ error: "Название и цена обязательны" });
     }
 
     const images = req.files.map((file) => file.path);
-    const { name, description, link, price } = req.body;
 
-    const newProduct = new Product({ images, name, description, link, price });
+    const newProduct = new Product({
+      name,
+      description,
+      link,
+      price,
+      images,
+      visible: true,
+    });
+
     await newProduct.save();
     res.status(201).json(newProduct);
   } catch (err) {
@@ -58,7 +67,7 @@ app.post("/products", upload.array("images", 10), async (req, res) => {
   }
 });
 
-// API: Получить все товары
+// ✅ Получить все товары
 app.get("/products", async (req, res) => {
   try {
     const products = await Product.find();
@@ -69,15 +78,20 @@ app.get("/products", async (req, res) => {
   }
 });
 
-// API: Редактировать товар
+// ✅ Обновить товар
 app.put("/products/:id", async (req, res) => {
   try {
-    const { name, description, price } = req.body;
+    const { name, description, price, link } = req.body; // ✅ включили link
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      { name, description, price },
+      { name, description, price, link }, // ✅ теперь обновляется link
       { new: true }
     );
+
+    if (!updatedProduct) {
+      return res.status(404).json({ error: "Товар не найден" });
+    }
+
     res.json(updatedProduct);
   } catch (err) {
     console.error("Ошибка при обновлении товара:", err);
@@ -85,7 +99,7 @@ app.put("/products/:id", async (req, res) => {
   }
 });
 
-// API: Удалить товар (если понадобится)
+// ✅ Удалить товар
 app.delete("/products/:id", async (req, res) => {
   try {
     await Product.findByIdAndDelete(req.params.id);
@@ -96,6 +110,27 @@ app.delete("/products/:id", async (req, res) => {
   }
 });
 
-// Запуск сервера
+// ✅ Обновить видимость
+app.patch("/products/:id", async (req, res) => {
+  try {
+    const { visible } = req.body;
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      { visible },
+      { new: true }
+    );
+
+    if (!updatedProduct) {
+      return res.status(404).json({ error: "Товар не найден" });
+    }
+
+    res.json(updatedProduct);
+  } catch (err) {
+    console.error("Ошибка при обновлении видимости:", err);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+// 🚀 Запуск сервера
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
